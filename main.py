@@ -25,6 +25,6 @@ async def handle_upload(file: UploadFile = File(...)):
     os.remove(temp_path)
 
     return {
-        "parsed": parsed.model_dump(),
-        "preview": raw_text[:1000]  # Optional: show some text preview
+        "preview": raw_text,
+        "parsed": parsed.model_dump()
     }

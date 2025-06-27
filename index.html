@@ -1,36 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Resume Uploader</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h2>Upload Resume</h2>
-  <form id="uploadForm">
-    <input type="file" id="fileInput" accept="application/pdf" required />
-    <button type="submit">Upload</button>
-  </form>
+<body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center font-sans">
 
-  <pre id="output"></pre>
+  <div class="bg-white shadow-2xl rounded-2xl p-8 max-w-lg w-full space-y-6">
+    <h2 class="text-2xl font-semibold text-gray-800 text-center">Upload Your Resume</h2>
+
+    <form id="uploadForm" class="space-y-4">
+      <label for="fileInput" class="block text-gray-600">Choose a PDF file</label>
+      <input 
+        type="file" 
+        id="fileInput" 
+        accept="application/pdf" 
+        required
+        class="block w-full text-sm text-gray-500
+               file:mr-4 file:py-2 file:px-4
+               file:rounded-md file:border-0
+               file:text-sm file:font-semibold
+               file:bg-blue-50 file:text-blue-700
+               hover:file:bg-blue-100"
+      />
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-md transition">
+        Upload
+      </button>
+    </form>
+
+    <div id="loader" class="text-center text-blue-600 font-medium hidden">Uploading...</div>
+
+    <pre id="output" class="bg-gray-100 rounded-md p-4 text-sm overflow-auto max-h-96 whitespace-pre-wrap text-gray-800"></pre>
+  </div>
 
   <script>
     const form = document.getElementById("uploadForm");
     const output = document.getElementById("output");
+    const loader = document.getElementById("loader");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+
       const fileInput = document.getElementById("fileInput");
       const file = fileInput.files[0];
+      if (!file) return;
+
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("https://resume-parsers.onrender.com/upload/", {
-        method: "POST",
-        body: formData
-      });
+      loader.classList.remove("hidden");
+      output.textContent = "";
 
-      const json = await res.json();
-      output.textContent = JSON.stringify(json, null, 2);
+      try {
+        const res = await fetch("https://resume-parsers.onrender.com/upload/", {
+          method: "POST",
+          body: formData
+        });
+
+        const json = await res.json();
+        output.textContent = formatOutput(json);
+      } catch (err) {
+        output.textContent = "Error uploading file. Please try again.";
+      } finally {
+        loader.classList.add("hidden");
+      }
     });
+
+    function formatOutput(obj, indent = 0) {
+      const spacing = '  '.repeat(indent);
+      let result = '';
+
+      for (const key in obj) {
+        const value = obj[key];
+        if (Array.isArray(value)) {
+          result += `${spacing}${key}:\n`;
+          value.forEach((item) => {
+            if (typeof item === 'object') {
+              result += `${spacing}  -\n` + formatOutput(item, indent + 2);
+            } else {
+              result += `${spacing}  - ${item}\n`;
+            }
+          });
+        } else if (typeof value === 'object' && value !== null) {
+          result += `${spacing}${key}:\n` + formatOutput(value, indent + 1);
+        } else {
+          result += `${spacing}${key}: ${value}\n`;
+        }
+      }
+
+      return result;
+    }
   </script>
 </body>
 </html>
+
