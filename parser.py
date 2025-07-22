@@ -8,6 +8,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from docx import Document
 from PIL import Image
 import pytesseract
+import easyocr
 
 api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -80,6 +81,7 @@ Resume Detail:
 parser = PydanticOutputParser(pydantic_object=Resume)
 prompt_template = PromptTemplate(template=resume_template, input_variables=["resume_text"])
 model = init_chat_model(model="gpt-4o-mini", model_provider="openai").with_structured_output(Resume)
+reader = easyocr.Reader(['en', 'th'])
 
 def extract_text_from_docx(file_path: str) -> str:
     doc = Document(file_path)
@@ -89,9 +91,14 @@ def extract_text_from_txt(file_path: str) -> str:
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
 
+# def extract_text_from_image(file_path: str) -> str:
+#     image = Image.open(file_path)
+#     return pytesseract.image_to_string(image)
+
 def extract_text_from_image(file_path: str) -> str:
-    image = Image.open(file_path)
-    return pytesseract.image_to_string(image)
+    result = reader.readtext(file_path, detail=0)
+    return "\n".join(result)
+
 
 def extract_text(file_path: str) -> str:
     ext = os.path.splitext(file_path)[-1].lower()

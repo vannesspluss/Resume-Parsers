@@ -9,4 +9,5 @@ pillow
 pytesseract
 python-multipart
 email-validator
+easyocr
 jinja2
